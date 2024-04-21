@@ -1,0 +1,4 @@
+com\benchabana\openid\model\IdpToken.class
+com\benchabana\openid\controllers\v1\OpenIdController.class
+com\benchabana\openid\OpenIdApplication.class
+com\benchabana\openid\services\OpenIdService.class

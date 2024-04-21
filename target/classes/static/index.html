@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<meta http-equiv="Refresh" content="text/html; charset=UTF-8"/>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redirection vers OpenID Connect</title>
+</head>
+<body>
+
+<h1>Page de Redirection</h1>
+<p>Cliquez sur le bouton ci-dessous pour être redirigé vers l'URL OpenID Connect :</p>
+
+<button onclick="redirectToOpenIDConnect()">Redirection OpenID Connect</button>
+<br>
+Scopes : &nbsp;<input name="scope" id="scope" type="text" size="50" maxlength="50" value ="openid email" style="background-color:#CEE1F9;font-size: 12px;">
+&nbsp
+<a href='#' onclick='logout()' >logout</a>
+<br>
+ClientId : &nbsp;<input name="clientid" id="clientid" type="text" size="50" maxlength="50" value ="neosoft" style="background-color:#CEE1F9;font-size: 12px;">
+&nbsp
+Secret : &nbsp;<input name="secret" id="secret" type="text" size="50" maxlength="50" value ="" style="background-color:#CEE1F9;font-size: 12px;">
+<br>
+<br>
+<br>
+<input name="code" id="code" type="text" size="150" maxlength="200" style="background-color:#CEE1F9;font-size: 12px;">
+&nbsp;
+<a href='#' onclick='token()' >token</a>
+<br>
+<br>
+<a href='#' onclick='jwt()' > jwt.io </a> &nbsp;
+<br>
+<textarea id="token" name="token" rows="27" cols="190"></textarea>
+<script>
+
+    function getCookie(name , value)
+    {
+        var nameEQ = name + "=";
+        var ca = document.cookie.split(';');
+        for(var i=0;i < ca.length;i++) {
+            var c = ca[i];
+            while (c.charAt(0)==' ') c = c.substring(1,c.length);
+            if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+        }
+
+        if(value && value != null)  return value;
+
+        return null;
+    }
+
+    document.getElementById("scope").value = getCookie("scope","openid email");
+    document.getElementById("clientid").value = getCookie("clientid","neosoft");
+    document.getElementById("secret").value = getCookie("secret");
+
+</script>
+<script>
+
+    var uriopenid = "http://localhost:8080";
+
+    function makeid() {
+	  var text = "";
+	  var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+	  for (var i = 0; i < 22; i++)
+	    text += possible.charAt(Math.floor(Math.random() * possible.length));
+
+	  return text;
+    }
+
+    function redirectToOpenIDConnect() {
+        setCookie("clientid", document.getElementById("clientid").value );
+        setCookie("secret", document.getElementById("secret").value );
+        setCookie("scope", document.getElementById("scope").value );
+
+        // Rediriger vers l'URL spécifiée
+        window.location.href = uriopenid + "/realms/master/protocol/openid-connect/auth" +
+            "?client_id=" + document.getElementById("clientid").value +
+            "&response_type=code" +
+            "&scope=" + document.getElementById("scope").value +
+            "&redirect_uri=http://localhost:9000/index.html" +
+            "&state=" + makeid() +
+            "&nonce=" + makeid();
+    }
+
+    function logout()
+    {
+
+        var url = uriopenid + '/realms/master/protocol/openid-connect/logout';
+
+        var win = window.open(url, '_blank');
+        win.focus();
+    }
+
+    function setCookie(name,value,days,domaine)
+    {
+        var expires = "";
+        if (days) {
+            var date = new Date();
+            date.setTime(date.getTime() + (days*24*60*60*1000));
+            expires = "; expires=" + date.toUTCString();
+        }
+        var cookievalue = name + "=" + (value || "")  + expires + "; path=/"
+
+        if(domaine)
+        {
+            cookievalue = cookievalue + ";domain="+domaine+";";
+        }
+
+        document.cookie = cookievalue;
+    }
+
+
+</script>
+
+<script>
+    // Fonction pour récupérer les paramètres de l'URL
+    function getUrlParameter(name) {
+        name = name.replace(/[[]/, '\\[').replace(/[\]]/, '\\]');
+        var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+        var results = regex.exec(location.search);
+        return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+    }
+
+    // Récupérer le paramètre "code" de l'URL
+    var code = getUrlParameter('code');
+    document.getElementById("code").value = code;
+</script>
+
+<script>
+
+    function token()
+    {
+      var request  = new XMLHttpRequest();
+	  var url = 'http://localhost:9000/v1/openid/token?'
+	  + 'code='+document.getElementById("code").value
+	  + '&clientid='+document.getElementById("clientid").value
+	  + '&secret='+document.getElementById("secret").value ;
+	  request.open('GET', encodeURI(url));
+
+
+	  request.setRequestHeader('Accept', 'application/json, text/javascript');
+
+	  request.onreadystatechange = function() {
+			// return if not ready state 4
+
+			if (request.readyState == 4) {
+				document.getElementById("token").value = request.response;
+		      }
+
+		};
+
+		request.withCredentials = true;
+		//request.onreadystatechange = handler;
+		request.send(null);
+    }
+
+    function jwt()
+   {
+        var url = "https://jwt.io";
+        var win = window.open(url, '_blank');
+        win.focus();
+   }
+
+
+</script>
+
+</body>
+</html>
